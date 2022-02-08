@@ -16,26 +16,43 @@ function initAnimation(){
     let textElements = document.querySelectorAll(".typewritten");
     
     textElements.forEach(textElement => {
-        let textContent = textElement.textContent;
+        let textContent = textElement.innerHTML;
         textElement.textContent = "";
-        writesingleCharacterLoop(textContent, textElement);
+        writeSingleCharacterLoop(textContent, textElement);
     });
 }
 
-function writesingleCharacterLoop(remainingText, textElement){
-    let char = remainingText.substring(0, 1);
-    remainingText = remainingText.substring(1, remainingText.length);
-    textElement.textContent += char;
+function writeSingleCharacterLoop(remainingText, textElement){
+    let char;
+    let isLineBreak = remainingText.startsWith("<br>") || remainingText.startsWith("<br/>");
+
+    if (isLineBreak) {
+        // remove all of the linebreak tag.
+        char = remainingText.substring(remainingText.indexOf("<"), remainingText.indexOf(">") + 1);
+        remainingText = remainingText.substring(remainingText.indexOf(">") + 1, remainingText.length); 
+    } else {
+        char = remainingText.substring(0, 1);
+        remainingText = remainingText.substring(1, remainingText.length);
+    }
+
+    textElement.innerHTML += char;
 
     if (soundOn){
         playAudioForChar(char);
     }    
 
     if (remainingText.length > 0){
+        let timeout;
+        //longer sound for linebreak, because it shouldn't overlap with the rest.
+        if (isLineBreak){
+            timeout = 1000;
+        } else {
+            timeout = 100 + (Math.random() * 300)
+        }
         setTimeout(() => {
-            writesingleCharacterLoop(remainingText, textElement);
+            writeSingleCharacterLoop(remainingText, textElement);
             
-        }, 100 + (Math.random() * 300));
+        }, timeout);
     }
 }
 
@@ -43,8 +60,11 @@ function playAudioForChar(character){
     if (character === " "){
         let clone = spaceSound.cloneNode();
         clone.play();
+    } else if(character  === "<br>" || character  === "<br/>"){
+        let clone = linebreakSound.cloneNode();
+        clone.play();
     } else {
-        let clone = standardSounds[0].cloneNode();
+        let clone = standardSounds[Math.round(Math.random())].cloneNode();
         clone.play();
     }
 }
